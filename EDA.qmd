@@ -1,0 +1,10 @@
+---
+title: "Project 3"
+author: "Jamin Goo"
+format: html
+editor: visual
+---
+
+## 1. EDA
+
+[Click here for the Modeling Page](Modeling.html)
