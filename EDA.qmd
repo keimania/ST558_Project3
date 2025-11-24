@@ -5,6 +5,72 @@ format: html
 editor: visual
 ---
 
-## 1. EDA
+# Introduction
+
+In this project, we analyze the Diabetes Health Indicators Dataset, which is derived from the BRFSS 2015 data.
+
+## Data and Variables
+
+## Purpose and Goal
+
+### 1. Reading Data
+
+```{R}
+library(tidyverse)
+
+# Read the data (assuming the file is in the root directory)
+diabetes <- read_csv("diabetes_binary_health_indicators_BRFSS2015.csv")
+print(head(diabetes))
+```
+
+Convert variables to factors with meaningful levels
+
+```{r}
+diabetes_clean <- diabetes |>
+  mutate(
+    Diabetes_binary = factor(Diabetes_binary, levels = c(0, 1), labels = c("No Diabetes", "Diabetes")),
+    HighBP = factor(HighBP, levels = c(0, 1), labels = c("No High BP", "High BP")),
+    HighChol = factor(HighChol, levels = c(0, 1), labels = c("No High Chol", "High Chol")),
+    CholCheck = factor(CholCheck, levels = c(0, 1), labels = c("No Check", "Check in 5 yrs")),
+    Smoker = factor(Smoker, levels = c(0, 1), labels = c("No", "Yes")),
+    Stroke = factor(Stroke, levels = c(0, 1), labels = c("No", "Yes")),
+    HeartDiseaseorAttack = factor(HeartDiseaseorAttack, levels = c(0, 1), labels = c("No", "Yes")),
+    PhysActivity = factor(PhysActivity, levels = c(0, 1), labels = c("No", "Yes")),
+    Fruits = factor(Fruits, levels = c(0, 1), labels = c("No", "Yes")),
+    Veggies = factor(Veggies, levels = c(0, 1), labels = c("No", "Yes")),
+    HvyAlcoholConsump = factor(HvyAlcoholConsump, levels = c(0, 1), labels = c("No", "Yes")),
+    AnyHealthcare = factor(AnyHealthcare, levels = c(0, 1), labels = c("No", "Yes")),
+    NoDocbcCost = factor(NoDocbcCost, levels = c(0, 1), labels = c("No", "Yes")),
+    GenHlth = factor(GenHlth, levels = c(1, 2, 3, 4, 5), 
+                     labels = c("Excellent", "Very Good", "Good", "Fair", "Poor")),
+    DiffWalk = factor(DiffWalk, levels = c(0, 1), labels = c("No", "Yes")),
+    Sex = factor(Sex, levels = c(0, 1), labels = c("Female", "Male")),
+    Age = factor(Age),
+    Education = factor(Education),
+    Income = factor(Income)
+  )
+
+# Check for missing values
+missing_count <- sum(is.na(diabetes_clean))
+cat("Total missing values in the dataset:", missing_count, "\n")
+
+```
+Summary and Statistics
+```{r}
+summary(diabetes_clean)
+
+# Detailed summary statistics for BMI grouped by Diabetes Status
+diabetes_clean |>
+  group_by(Diabetes_binary) |>
+  summarize(
+    mean_BMI = mean(BMI, na.rm = TRUE),
+    median_BMI = median(BMI, na.rm = TRUE),
+    sd_BMI = sd(BMI, na.rm = TRUE),
+    count = n()
+  )
+
+```
+
+
 
 [Click here for the Modeling Page](Modeling.html)
