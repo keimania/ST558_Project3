@@ -6,15 +6,33 @@ output-file: index.html
 editor: visual
 ---
 
-# Introduction
+# 1. Introduction
 
-In this project, we analyze the Diabetes Health Indicators Dataset, which is derived from the BRFSS 2015 data.
+In this project, **we analyze the Diabetes Health Indicators Dataset, which is derived from the BRFSS 2015 data.** This dataset includes health-related responses from individuals, focusing on chronic conditions and lifestyle factors.
 
-## Data and Variables
+## 1.1. Data and Variables
 
-## Purpose and Goal
+The dataset contains 21 variables and 253,680 observations.
 
-### 1. Reading Data
+**We will focus our investigation on specific variables that are likely to be strong predictors of diabetes.** The key variables in our analysis include:
+
+-   **Diabetes_binary** (Response): The target variable indicating the presence of diabetes (0 = No Diabetes, 1 = Diabetes or Prediabetes).
+
+-   **BMI**: Body Mass Index, a key indicator of obesity.
+
+-   **HighBP**: Whether the individual has high blood pressure.
+
+-   **Age**: 13-level age category (ranging from 18-24 up to 80+).
+
+-   **GenHlth**: Self-reported general health on a scale of 1 (Excellent) to 5 (Poor).
+
+## 1.2. Purpose and Goal
+
+-   **The purpose of this Exploratory Data Analysis (EDA)** : examine the distributions of these variables and investigate the relationships between the health indicators and the diabetes status. By visualizing these associations, we aim to verify which factors are most strongly correlated with diabetes.
+
+-   **The ultimate goal of this project** : use these insights to build and compare predictive models—specifically a Classification Tree and a Random Forest—to accurately classify whether an individual has diabetes based on their health profile.
+
+# 2. Reading Data
 
 ```{R}
 library(tidyverse)
@@ -24,7 +42,7 @@ diabetes <- read_csv("diabetes_binary_health_indicators_BRFSS2015.csv")
 print(head(diabetes))
 ```
 
-Convert variables to factors with meaningful levels
+## 2.1. Convert variables to factors with meaningful levels
 
 ```{r}
 diabetes_clean <- diabetes |>
@@ -56,7 +74,11 @@ missing_count <- sum(is.na(diabetes_clean))
 cat("Total missing values in the dataset:", missing_count, "\n")
 
 ```
-Summary and Statistics
+
+## 2.2. Summary and Statistics
+
+We use **summary()** to get a broad overview of the data distributions, and **summarize()** to examine specific relationships with the response variable.
+
 ```{r}
 summary(diabetes_clean)
 
@@ -72,16 +94,31 @@ diabetes_clean |>
 
 ```
 
+-   **BMI Differences**: The grouped summary table explicitly highlights a relationship between BMI and Diabetes. The mean BMI for the "Diabetes" group (approx. 31.9) is noticeably higher than the "No Diabetes" group (approx. 27.8). **This suggests that BMI is likely a strong predictor**.
+
+# 3. Exploratory Data Analysis (EDA)
+
+## 3.1. The Response Variable: Diabetes Status
+
 ```{R}
 ggplot(diabetes_clean, aes(x = Diabetes_binary, fill = Diabetes_binary)) +
   geom_bar() +
   labs(title = "Distribution of Diabetes Status", x = "Status", y = "Count")
 ```
+
+This bar chart visually confirms the class imbalance identified in the summary statistics. **The number of healthy individuals vastly outnumbers those with diabetes.**
+
+## 3.2. Diabetes vs. BMI
+
 ```{R}
 ggplot(diabetes_clean, aes(x = Diabetes_binary, y = BMI, fill = Diabetes_binary)) +
   geom_boxplot() +
   labs(title = "BMI Distribution by Diabetes Status", x = "Diabetes Status", y = "BMI")
 ```
+
+The boxplot illustrates a clear positive correlation between BMI and diabetes. The median BMI for the "Diabetes" group is visibly higher than that of the "No Diabetes" group. Furthermore, the entire interquartile range (the box) is shifted upwards for the diabetes group. **This strongly suggests that as BMI increases, the likelihood of having diabetes also increases.**
+
+## 3.3. Diabetes vs. High Blood Pressure
 
 ```{R}
 ggplot(diabetes_clean, aes(x = HighBP, fill = Diabetes_binary)) +
@@ -90,6 +127,11 @@ ggplot(diabetes_clean, aes(x = HighBP, fill = Diabetes_binary)) +
        x = "High Blood Pressure", 
        y = "Count")
 ```
+
+This plot illustrates a clear positive correlation between BMI and High Blood Pressure. In the "No High BP" group, the proportion of people with diabetes is very small. However, in the "High BP" group, the count of people with diabetes is significant. **This indicates that High Blood Pressure is a significant risk factor for diabetes.**
+
+## 3.4. Diabetes vs. Age
+
 ```{R}
 ggplot(diabetes_clean, aes(x = Age, fill = Diabetes_binary)) +
   geom_bar(position = "fill") +
@@ -98,6 +140,10 @@ ggplot(diabetes_clean, aes(x = Age, fill = Diabetes_binary)) +
        x = "Age Group Level", 
        y = "Proportion")
 ```
+
+The stacked bar chart shows a clear linear trend: as age increases (moving from group 1 to group 13), the proportion of individuals with diabetes (the blue section) steadily increases. The risk appears to peak around age groups 10 through 12. **This suggests that age is a significant factor in diabetes prevalence, with older individuals being at a higher risk.**
+
+## 3.5. BMI by Diabetes Status Faceted by General Health
 
 ```{R}
 ggplot(diabetes_clean, aes(x = BMI, fill = Diabetes_binary)) +
@@ -108,5 +154,17 @@ ggplot(diabetes_clean, aes(x = BMI, fill = Diabetes_binary)) +
        y = "Count") +
   theme(legend.position = "bottom")
 ```
+
+This faceted plot allows us to see if the BMI-Diabetes relationship holds true regardless of self-reported general health.
+
+Across almost all health ratings (from "Excellent" to "Poor"), **the distribution of BMI for the Diabetes group (blue) is shifted to the right compared to the No Diabetes group (red).**
+
+It also shows that the "Poor" and "Fair" health categories have a larger overlap of diabetes cases compared to the "Excellent" category, **suggesting that poor general health is strongly linked to both higher BMI and diabetes.**
+
+# 4. Conclusion
+
+Our EDA confirms that variables such as **BMI, General Health, High Blood Pressure, and Age show strong associations with Diabetes.** These will be excellent candidates for predictors in our machine learning models.
+
+We will now proceed to split this data and train Classification Tree and Random Forest models to predict diabetes status.
 
 [Click here for the Modeling Page](Modeling.html)

@@ -143,15 +143,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <section id="introduction" class="level1">
-<h1>Introduction</h1>
-<p>In this project, we analyze the Diabetes Health Indicators Dataset, which is derived from the BRFSS 2015 data.</p>
+<h1>1. Introduction</h1>
+<p>In this project, <strong>we analyze the Diabetes Health Indicators Dataset, which is derived from the BRFSS 2015 data.</strong> This dataset includes health-related responses from individuals, focusing on chronic conditions and lifestyle factors.</p>
 <section id="data-and-variables" class="level2">
-<h2 class="anchored" data-anchor-id="data-and-variables">Data and Variables</h2>
+<h2 class="anchored" data-anchor-id="data-and-variables">1.1. Data and Variables</h2>
+<p>The dataset contains 21 variables and 253,680 observations.</p>
+<p><strong>We will focus our investigation on specific variables that are likely to be strong predictors of diabetes.</strong> The key variables in our analysis include:</p>
+<ul>
+<li><p><strong>Diabetes_binary</strong> (Response): The target variable indicating the presence of diabetes (0 = No Diabetes, 1 = Diabetes or Prediabetes).</p></li>
+<li><p><strong>BMI</strong>: Body Mass Index, a key indicator of obesity.</p></li>
+<li><p><strong>HighBP</strong>: Whether the individual has high blood pressure.</p></li>
+<li><p><strong>Age</strong>: 13-level age category (ranging from 18-24 up to 80+).</p></li>
+<li><p><strong>GenHlth</strong>: Self-reported general health on a scale of 1 (Excellent) to 5 (Poor).</p></li>
+</ul>
 </section>
 <section id="purpose-and-goal" class="level2">
-<h2 class="anchored" data-anchor-id="purpose-and-goal">Purpose and Goal</h2>
-<section id="reading-data" class="level3">
-<h3 class="anchored" data-anchor-id="reading-data">1. Reading Data</h3>
+<h2 class="anchored" data-anchor-id="purpose-and-goal">1.2. Purpose and Goal</h2>
+<ul>
+<li><p><strong>The purpose of this Exploratory Data Analysis (EDA)</strong> : examine the distributions of these variables and investigate the relationships between the health indicators and the diabetes status. By visualizing these associations, we aim to verify which factors are most strongly correlated with diabetes.</p></li>
+<li><p><strong>The ultimate goal of this project</strong> : use these insights to build and compare predictive models—specifically a Classification Tree and a Random Forest—to accurately classify whether an individual has diabetes based on their health profile.</p></li>
+</ul>
+</section>
+</section>
+<section id="reading-data" class="level1">
+<h1>2. Reading Data</h1>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
@@ -194,7 +209,8 @@ dbl (22): Diabetes_binary, HighBP, HighChol, CholCheck, BMI, Smoker, Stroke,...
 #   DiffWalk &lt;dbl&gt;, Sex &lt;dbl&gt;, Age &lt;dbl&gt;, Education &lt;dbl&gt;, Income &lt;dbl&gt;</code></pre>
 </div>
 </div>
-<p>Convert variables to factors with meaningful levels</p>
+<section id="convert-variables-to-factors-with-meaningful-levels" class="level2">
+<h2 class="anchored" data-anchor-id="convert-variables-to-factors-with-meaningful-levels">2.1. Convert variables to factors with meaningful levels</h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>diabetes_clean <span class="ot">&lt;-</span> diabetes <span class="sc">|&gt;</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
@@ -227,7 +243,10 @@ dbl (22): Diabetes_binary, HighBP, HighChol, CholCheck, BMI, Smoker, Stroke,...
 <pre><code>Total missing values in the dataset: 0 </code></pre>
 </div>
 </div>
-<p>Summary and Statistics</p>
+</section>
+<section id="summary-and-statistics" class="level2">
+<h2 class="anchored" data-anchor-id="summary-and-statistics">2.2. Summary and Statistics</h2>
+<p>We use <strong>summary()</strong> to get a broad overview of the data distributions, and <strong>summarize()</strong> to examine specific relationships with the response variable.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(diabetes_clean)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -289,6 +308,15 @@ dbl (22): Diabetes_binary, HighBP, HighChol, CholCheck, BMI, Smoker, Stroke,...
 2 Diabetes            31.9         31   7.36  35346</code></pre>
 </div>
 </div>
+<ul>
+<li><strong>BMI Differences</strong>: The grouped summary table explicitly highlights a relationship between BMI and Diabetes. The mean BMI for the “Diabetes” group (approx. 31.9) is noticeably higher than the “No Diabetes” group (approx. 27.8). <strong>This suggests that BMI is likely a strong predictor</strong>.</li>
+</ul>
+</section>
+</section>
+<section id="exploratory-data-analysis-eda" class="level1">
+<h1>3. Exploratory Data Analysis (EDA)</h1>
+<section id="the-response-variable-diabetes-status" class="level2">
+<h2 class="anchored" data-anchor-id="the-response-variable-diabetes-status">3.1. The Response Variable: Diabetes Status</h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(diabetes_clean, <span class="fu">aes</span>(<span class="at">x =</span> Diabetes_binary, <span class="at">fill =</span> Diabetes_binary)) <span class="sc">+</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>() <span class="sc">+</span></span>
@@ -301,6 +329,10 @@ dbl (22): Diabetes_binary, HighBP, HighChol, CholCheck, BMI, Smoker, Stroke,...
 </div>
 </div>
 </div>
+<p>This bar chart visually confirms the class imbalance identified in the summary statistics. <strong>The number of healthy individuals vastly outnumbers those with diabetes.</strong></p>
+</section>
+<section id="diabetes-vs.-bmi" class="level2">
+<h2 class="anchored" data-anchor-id="diabetes-vs.-bmi">3.2. Diabetes vs.&nbsp;BMI</h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(diabetes_clean, <span class="fu">aes</span>(<span class="at">x =</span> Diabetes_binary, <span class="at">y =</span> BMI, <span class="at">fill =</span> Diabetes_binary)) <span class="sc">+</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>() <span class="sc">+</span></span>
@@ -313,6 +345,10 @@ dbl (22): Diabetes_binary, HighBP, HighChol, CholCheck, BMI, Smoker, Stroke,...
 </div>
 </div>
 </div>
+<p>The boxplot illustrates a clear positive correlation between BMI and diabetes. The median BMI for the “Diabetes” group is visibly higher than that of the “No Diabetes” group. Furthermore, the entire interquartile range (the box) is shifted upwards for the diabetes group. <strong>This strongly suggests that as BMI increases, the likelihood of having diabetes also increases.</strong></p>
+</section>
+<section id="diabetes-vs.-high-blood-pressure" class="level2">
+<h2 class="anchored" data-anchor-id="diabetes-vs.-high-blood-pressure">3.3. Diabetes vs.&nbsp;High Blood Pressure</h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(diabetes_clean, <span class="fu">aes</span>(<span class="at">x =</span> HighBP, <span class="at">fill =</span> Diabetes_binary)) <span class="sc">+</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">position =</span> <span class="st">"dodge"</span>) <span class="sc">+</span></span>
@@ -327,6 +363,10 @@ dbl (22): Diabetes_binary, HighBP, HighChol, CholCheck, BMI, Smoker, Stroke,...
 </div>
 </div>
 </div>
+<p>This plot illustrates a clear positive correlation between BMI and High Blood Pressure. In the “No High BP” group, the proportion of people with diabetes is very small. However, in the “High BP” group, the count of people with diabetes is significant. <strong>This indicates that High Blood Pressure is a significant risk factor for diabetes.</strong></p>
+</section>
+<section id="diabetes-vs.-age" class="level2">
+<h2 class="anchored" data-anchor-id="diabetes-vs.-age">3.4. Diabetes vs.&nbsp;Age</h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(diabetes_clean, <span class="fu">aes</span>(<span class="at">x =</span> Age, <span class="at">fill =</span> Diabetes_binary)) <span class="sc">+</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">position =</span> <span class="st">"fill"</span>) <span class="sc">+</span></span>
@@ -342,6 +382,10 @@ dbl (22): Diabetes_binary, HighBP, HighChol, CholCheck, BMI, Smoker, Stroke,...
 </div>
 </div>
 </div>
+<p>The stacked bar chart shows a clear linear trend: as age increases (moving from group 1 to group 13), the proportion of individuals with diabetes (the blue section) steadily increases. The risk appears to peak around age groups 10 through 12. <strong>This suggests that age is a significant factor in diabetes prevalence, with older individuals being at a higher risk.</strong></p>
+</section>
+<section id="bmi-by-diabetes-status-faceted-by-general-health" class="level2">
+<h2 class="anchored" data-anchor-id="bmi-by-diabetes-status-faceted-by-general-health">3.5. BMI by Diabetes Status Faceted by General Health</h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(diabetes_clean, <span class="fu">aes</span>(<span class="at">x =</span> BMI, <span class="at">fill =</span> Diabetes_binary)) <span class="sc">+</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">binwidth =</span> <span class="dv">1</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>, <span class="at">position =</span> <span class="st">"identity"</span>) <span class="sc">+</span></span>
@@ -358,11 +402,18 @@ dbl (22): Diabetes_binary, HighBP, HighChol, CholCheck, BMI, Smoker, Stroke,...
 </div>
 </div>
 </div>
+<p>This faceted plot allows us to see if the BMI-Diabetes relationship holds true regardless of self-reported general health.</p>
+<p>Across almost all health ratings (from “Excellent” to “Poor”), <strong>the distribution of BMI for the Diabetes group (blue) is shifted to the right compared to the No Diabetes group (red).</strong></p>
+<p>It also shows that the “Poor” and “Fair” health categories have a larger overlap of diabetes cases compared to the “Excellent” category, <strong>suggesting that poor general health is strongly linked to both higher BMI and diabetes.</strong></p>
+</section>
+</section>
+<section id="conclusion" class="level1">
+<h1>4. Conclusion</h1>
+<p>Our EDA confirms that variables such as <strong>BMI, General Health, High Blood Pressure, and Age show strong associations with Diabetes.</strong> These will be excellent candidates for predictors in our machine learning models.</p>
+<p>We will now proceed to split this data and train Classification Tree and Random Forest models to predict diabetes status.</p>
 <p><a href="Modeling.html">Click here for the Modeling Page</a></p>
 
 
-</section>
-</section>
 </section>
 
 </main> <!-- /main -->
