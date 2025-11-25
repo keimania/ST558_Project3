@@ -2,6 +2,7 @@
 title: "Project 3"
 author: "Jamin Goo"
 format: html
+output-file: index.html
 editor: visual
 ---
 
@@ -71,6 +72,41 @@ diabetes_clean |>
 
 ```
 
+```{R}
+ggplot(diabetes_clean, aes(x = Diabetes_binary, fill = Diabetes_binary)) +
+  geom_bar() +
+  labs(title = "Distribution of Diabetes Status", x = "Status", y = "Count")
+```
+```{R}
+ggplot(diabetes_clean, aes(x = Diabetes_binary, y = BMI, fill = Diabetes_binary)) +
+  geom_boxplot() +
+  labs(title = "BMI Distribution by Diabetes Status", x = "Diabetes Status", y = "BMI")
+```
 
+```{R}
+ggplot(diabetes_clean, aes(x = HighBP, fill = Diabetes_binary)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Diabetes Count by High Blood Pressure Status", 
+       x = "High Blood Pressure", 
+       y = "Count")
+```
+```{R}
+ggplot(diabetes_clean, aes(x = Age, fill = Diabetes_binary)) +
+  geom_bar(position = "fill") +
+  labs(title = "Proportion of Diabetes by Age Group", 
+       subtitle = "Age groups coded 1 (18-24) to 13 (80+)",
+       x = "Age Group Level", 
+       y = "Proportion")
+```
+
+```{R}
+ggplot(diabetes_clean, aes(x = BMI, fill = Diabetes_binary)) +
+  geom_histogram(binwidth = 1, alpha = 0.5, position = "identity") +
+  facet_wrap(~ GenHlth) +
+  labs(title = "BMI Distribution by Diabetes Status across General Health Ratings",
+       x = "BMI",
+       y = "Count") +
+  theme(legend.position = "bottom")
+```
 
 [Click here for the Modeling Page](Modeling.html)
