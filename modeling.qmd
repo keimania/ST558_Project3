@@ -100,6 +100,7 @@ tree_rec <- recipe(Diabetes_binary ~ BMI + HighBP + HighChol + GenHlth + Age + P
 ```
 
 We set cost_complexity and tree_depth to 'tune()' so we can optimize them later.
+
 ```{r}
 # 2. Model Specification
 tree_spec <- decision_tree(
@@ -121,6 +122,7 @@ tree_grid <- grid_regular(cost_complexity(), tree_depth(), levels = 5)
 ## 3.3. Tuning and selection
 
 We run the workflow on the cross-validation folds using the grid of parameters
+
 ```{r}
 # Tune the model
 tree_fits <- tree_wkf |>
@@ -138,12 +140,14 @@ tree_fits |>
 ```
 
 We select the best parameter based on log_loss.
+
 ```{r}
 best_tree <- select_best(tree_fits, metric = "mn_log_loss")
 best_tree
 ```
 
 We finalize the workflow with the best parameters.
+
 ```{r}
 # 
 tree_final_wkf <- tree_wkf |>
@@ -151,6 +155,7 @@ tree_final_wkf <- tree_wkf |>
 ```
 
 We visualize the tuning results using plot Cost Complexity vs. Log Loss, grouped by Tree Depth.
+
 ```{r}
 tree_fits |>
   collect_metrics() |>
@@ -165,6 +170,7 @@ tree_fits |>
 ```
 
 We train the finalized model on the full training set and evaluates it on the test set.
+
 ```{r}
 tree_final_fit <- tree_final_wkf |>
   last_fit(data_split)
@@ -177,12 +183,14 @@ tree_final_fit |>
 ```
 
 We extract the actual model object for inspection.
+
 ```{r}
 tree_final_model <- extract_workflow(tree_final_fit) 
 tree_final_model
 ```
 
 We visualize the Decision Tree.
+
 ```{r}
 tree_final_model |>
   extract_fit_engine() |>
@@ -205,6 +213,7 @@ rf_rec <- tree_rec
 ```
 
 We set Use 'ranger' package and calculate variable importance. Number of trees is set to 100 for faster tuning.
+
 ```{r}
 # 2. Model Specification
 rf_spec <- rand_forest(
@@ -222,6 +231,7 @@ rf_wkf <- workflow() |>
 ```
 
 We define the range of hyperparameters to test. 'mtry' range is set from 2 to 7 because we have about 8 predictors available.
+
 ```{r}
 # 4. Grid for Tuning
 rf_grid <- grid_regular(
@@ -234,6 +244,7 @@ rf_grid <- grid_regular(
 ## 4.3. Tuning and selection
 
 We run the workflow on the cross-validation folds to find the best hyperparameters.
+
 ```{r}
 # Tune the model
 rf_fits <- rf_wkf |>
@@ -251,18 +262,21 @@ rf_fits |>
 ```
 
 We select the best parameter based on log_loss.
+
 ```{r}
 best_rf <- select_best(rf_fits, metric = "mn_log_loss")
 best_rf
 ```
 
 We finalize the workflow with the best parameters.
+
 ```{r}
 rf_final_wkf <- rf_wkf |>
   finalize_workflow(best_rf)
 ```
 
 We visualize the tuning results using plot the relationship between mtry, min_n, and model performance.
+
 ```{r}
 rf_fits |>
   collect_metrics() |>
@@ -276,6 +290,7 @@ rf_fits |>
 ```
 
 We train the finalized model on the full training set and evaluates it on the test set.
+
 ```{r}
 rf_final_fit <- rf_final_wkf |>
   last_fit(data_split, metrics = metrics_eval)
@@ -288,12 +303,14 @@ rf_final_fit |>
 ```
 
 We extract the actual model object for inspection.
+
 ```{r}
 rf_final_model <- extract_workflow(rf_final_fit) 
 rf_final_model
 ```
 
 We visualize the best Random Forest.
+
 ```{r}
 rf_final_model |>
   extract_fit_parsnip() |>
@@ -301,3 +318,37 @@ rf_final_model |>
   labs(title = "Random Forest Variable Importance")
 ```
 
+# 5. Final Model Selection
+
+Now we compare both "best" models which have been fitted to the training set and evaluated on the test set.
+
+```{r}
+# Collect Metrics from the already fitted objects
+tree_test_metrics <- collect_metrics(tree_final_fit)
+rf_test_metrics   <- collect_metrics(rf_final_fit)
+```
+
+## Combine for comparison
+
+```{r}
+model_comparison <- bind_rows(
+  tree_test_metrics |> mutate(model = "Classification Tree"),
+  rf_test_metrics |> mutate(model = "Random Forest")
+) |>
+  select(model, .metric, .estimate)
+
+print(model_comparison)
+```
+
+# 6. Conclusion
+
+In this analysis, we built and compared two machine learning models to predict diabetes: a single Classification Tree and a Random Forest.
+
+## 6.1. Performance Comparison
+We evaluated the models based on the metrics collected from the test set:
+
+-   **Classification Tree:** This model achieved an **Accuracy of 86.3%** and an **ROC AUC of 0.803**. While these numbers indicate decent predictive power, single trees are often prone to high variance.
+-   **Random Forest:** The ensemble model achieved a **Log Loss of 0.320**. A lower log-loss indicates that the model is not only correct but also confident in its probabilistic predictions.
+
+## 6.2. Final Selection
+Although the Classification Tree is easier to explain, the **Random Forest** demonstrates strong performance metrics (Log Loss: 0.320), suggesting it is robust in handling the complexity of health data. Therefore, we select the **Random Forest** as our final model for deployment to maximize predictive reliability.

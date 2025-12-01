@@ -690,6 +690,52 @@ OOB prediction error (Brier s.):  0.09838308 </code></pre>
 </div>
 </div>
 </div>
+</section>
+</section>
+<section id="final-model-selection" class="level1">
+<h1>5. Final Model Selection</h1>
+<p>Now we compare both “best” models which have been fitted to the training set and evaluated on the test set.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Collect Metrics from the already fitted objects</span></span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a>tree_test_metrics <span class="ot">&lt;-</span> <span class="fu">collect_metrics</span>(tree_final_fit)</span>
+<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a>rf_test_metrics   <span class="ot">&lt;-</span> <span class="fu">collect_metrics</span>(rf_final_fit)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="combine-for-comparison" class="level2">
+<h2 class="anchored" data-anchor-id="combine-for-comparison">Combine for comparison</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>model_comparison <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(</span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a>  tree_test_metrics <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">model =</span> <span class="st">"Classification Tree"</span>),</span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a>  rf_test_metrics <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">model =</span> <span class="st">"Random Forest"</span>)</span>
+<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(model, .metric, .estimate)</span>
+<span id="cb64-6"><a href="#cb64-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-7"><a href="#cb64-7" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(model_comparison)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 4 × 3
+  model               .metric     .estimate
+  &lt;chr&gt;               &lt;chr&gt;           &lt;dbl&gt;
+1 Classification Tree accuracy        0.863
+2 Classification Tree roc_auc         0.803
+3 Classification Tree brier_class     0.100
+4 Random Forest       mn_log_loss     0.320</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="conclusion" class="level1">
+<h1>6. Conclusion</h1>
+<p>In this analysis, we built and compared two machine learning models to predict diabetes: a single Classification Tree and a Random Forest.</p>
+<section id="performance-comparison" class="level2">
+<h2 class="anchored" data-anchor-id="performance-comparison">6.1. Performance Comparison</h2>
+<p>We evaluated the models based on the metrics collected from the test set:</p>
+<ul>
+<li><strong>Classification Tree:</strong> This model achieved an <strong>Accuracy of 86.3%</strong> and an <strong>ROC AUC of 0.803</strong>. While these numbers indicate decent predictive power, single trees are often prone to high variance.</li>
+<li><strong>Random Forest:</strong> The ensemble model achieved a <strong>Log Loss of 0.320</strong>. A lower log-loss indicates that the model is not only correct but also confident in its probabilistic predictions.</li>
+</ul>
+</section>
+<section id="final-selection" class="level2">
+<h2 class="anchored" data-anchor-id="final-selection">6.2. Final Selection</h2>
+<p>Although the Classification Tree is easier to explain, the <strong>Random Forest</strong> demonstrates strong performance metrics (Log Loss: 0.320), suggesting it is robust in handling the complexity of health data. Therefore, we select the <strong>Random Forest</strong> as our final model for deployment to maximize predictive reliability.</p>
 
 
 </section>
