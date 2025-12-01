@@ -24,6 +24,7 @@ First, we load the necessary libraries and apply the same data cleaning steps as
 ```{r}
 library(tidyverse)
 library(tidymodels)
+library(vip)
 
 # Read the data
 diabetes <- read_csv("diabetes_binary_health_indicators_BRFSS2015.csv")
@@ -119,7 +120,7 @@ tree_grid <- grid_regular(cost_complexity(), tree_depth(), levels = 5)
 
 ## 3.3. Tuning and selection
 
-Run the workflow on the cross-validation folds using the grid of parameters
+We run the workflow on the cross-validation folds using the grid of parameters
 ```{r}
 # Tune the model
 tree_fits <- tree_wkf |>
@@ -181,9 +182,122 @@ tree_final_model <- extract_workflow(tree_final_fit)
 tree_final_model
 ```
 
-We visualizing the Decision Tree.
+We visualize the Decision Tree.
 ```{r}
 tree_final_model |>
   extract_fit_engine() |>
   rpart.plot::rpart.plot(roundint = FALSE)
 ```
+
+# 4. Model 2: Random Forest
+
+## 4.1. Introduction to Random Forest
+
+A Random Forest is an ensemble learning method that constructs a multitude of decision trees at training time. For classification tasks, the output of the random forest is the class selected by most trees (mode).
+
+Random forests generally outperform single decision trees because they correct for the habit of decision trees to overfit to their training set. We will tune mtry (number of variables randomly sampled at each split) and min_n (minimum number of data points in a node).
+
+## 4.2. Model Specification and Workflow
+
+```{r}
+# 1. Recipe (We can reuse the same predictors)
+rf_rec <- tree_rec
+```
+
+We set Use 'ranger' package and calculate variable importance. Number of trees is set to 100 for faster tuning.
+```{r}
+# 2. Model Specification
+rf_spec <- rand_forest(
+  mtry = tune(),
+  min_n = tune(),
+  trees = 100
+) |>
+  set_engine("ranger", importance = "impurity") |>
+  set_mode("classification")
+
+# 3. Workflow
+rf_wkf <- workflow() |>
+  add_recipe(rf_rec) |>
+  add_model(rf_spec)
+```
+
+We define the range of hyperparameters to test. 'mtry' range is set from 2 to 7 because we have about 8 predictors available.
+```{r}
+# 4. Grid for Tuning
+rf_grid <- grid_regular(
+  mtry(range = c(2, 7)),
+  min_n(),
+  levels = 3
+)
+```
+
+## 4.3. Tuning and selection
+
+We run the workflow on the cross-validation folds to find the best hyperparameters.
+```{r}
+# Tune the model
+rf_fits <- rf_wkf |>
+  tune_grid(
+    resamples = cv_folds,
+    grid = rf_grid,
+    metrics = metrics_eval
+  )
+```
+
+```{r}
+# Collect metrics
+rf_fits |>
+  collect_metrics()
+```
+
+We select the best parameter based on log_loss.
+```{r}
+best_rf <- select_best(rf_fits, metric = "mn_log_loss")
+best_rf
+```
+
+We finalize the workflow with the best parameters.
+```{r}
+rf_final_wkf <- rf_wkf |>
+  finalize_workflow(best_rf)
+```
+
+We visualize the tuning results using plot the relationship between mtry, min_n, and model performance.
+```{r}
+rf_fits |>
+  collect_metrics() |>
+  mutate(min_n = factor(min_n)) |>
+  ggplot(aes(mtry, mean, color = min_n)) +
+  geom_line(size = 1.5, alpha = 0.6) +
+  geom_point(size = 2) +
+  facet_wrap(~ .metric, scales = "free", nrow = 2) +
+  scale_color_viridis_d(option = "plasma", begin = .9, end = 0) +
+  labs(title = "Random Forest Tuning Results")
+```
+
+We train the finalized model on the full training set and evaluates it on the test set.
+```{r}
+rf_final_fit <- rf_final_wkf |>
+  last_fit(data_split, metrics = metrics_eval)
+rf_final_fit
+```
+
+```{r}
+rf_final_fit |>
+  collect_metrics()
+```
+
+We extract the actual model object for inspection.
+```{r}
+rf_final_model <- extract_workflow(rf_final_fit) 
+rf_final_model
+```
+
+We visualize the best Random Forest.
+```{r}
+rf_final_model |>
+  extract_fit_parsnip() |>
+  vip::vip() +
+  labs(title = "Random Forest Variable Importance")
+```
+
