@@ -1,7 +1,76 @@
 ---
-title: "modeling"
+title: "Modeling"
+author: "Jamin Goo"
 format: html
 editor: visual
 ---
 
-## Modeling
+# 1. Introduction
+
+In this section, we will build predictive models to classify whether an individual has diabetes (Diabetes_binary) based on various health indicators.
+
+# 2. Setup and Data Preparation
+
+First, we load the necessary libraries and apply the same data cleaning steps as performed in the EDA phase.
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+
+# Read the data
+diabetes <- read_csv("diabetes_binary_health_indicators_BRFSS2015.csv")
+
+# Apply Data Cleaning and Factor Conversion (Same as EDA)
+diabetes_clean <- diabetes |>
+  mutate(
+    Diabetes_binary = factor(Diabetes_binary, levels = c(0, 1), labels = c("No Diabetes", "Diabetes")),
+    HighBP = factor(HighBP, levels = c(0, 1), labels = c("No High BP", "High BP")),
+    HighChol = factor(HighChol, levels = c(0, 1), labels = c("No High Chol", "High Chol")),
+    CholCheck = factor(CholCheck, levels = c(0, 1), labels = c("No Check", "Check in 5 yrs")),
+    Smoker = factor(Smoker, levels = c(0, 1), labels = c("No", "Yes")),
+    Stroke = factor(Stroke, levels = c(0, 1), labels = c("No", "Yes")),
+    HeartDiseaseorAttack = factor(HeartDiseaseorAttack, levels = c(0, 1), labels = c("No", "Yes")),
+    PhysActivity = factor(PhysActivity, levels = c(0, 1), labels = c("No", "Yes")),
+    Fruits = factor(Fruits, levels = c(0, 1), labels = c("No", "Yes")),
+    Veggies = factor(Veggies, levels = c(0, 1), labels = c("No", "Yes")),
+    HvyAlcoholConsump = factor(HvyAlcoholConsump, levels = c(0, 1), labels = c("No", "Yes")),
+    AnyHealthcare = factor(AnyHealthcare, levels = c(0, 1), labels = c("No", "Yes")),
+    NoDocbcCost = factor(NoDocbcCost, levels = c(0, 1), labels = c("No", "Yes")),
+    GenHlth = factor(GenHlth, levels = c(1, 2, 3, 4, 5), 
+                     labels = c("Excellent", "Very Good", "Good", "Fair", "Poor")),
+    DiffWalk = factor(DiffWalk, levels = c(0, 1), labels = c("No", "Yes")),
+    Sex = factor(Sex, levels = c(0, 1), labels = c("Female", "Male")),
+    Age = factor(Age),
+    Education = factor(Education),
+    Income = factor(Income)
+  )
+```
+
+## 2.1. Data Splitting
+
+We split the data into a training set (70%) and a test set (30%). We set a seed to ensure reproducibility.
+
+```{r}
+set.seed(123)
+
+# Stratified split to maintain class balance
+data_split <- initial_split(diabetes_clean, prop = 0.70, strata = Diabetes_binary)
+train_data <- training(data_split)
+test_data  <- testing(data_split)
+
+# Verify the split
+nrow(train_data)
+nrow(test_data)
+```
+
+## 2.2. Cross-Validation Folds
+
+We will use 5-fold cross-validation on the training data to tune our model parameters.
+
+```{r}
+cv_folds <- vfold_cv(train_data, v = 5, strata = Diabetes_binary)
+
+# Define the metric set: Log Loss
+metrics_eval <- metric_set(mn_log_loss)
+
+```

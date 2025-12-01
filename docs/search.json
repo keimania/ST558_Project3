@@ -89,5 +89,26 @@
     "title": "Project 3",
     "section": "",
     "text": "The dataset contains 21 variables and 253,680 observations.\nWe will focus our investigation on specific variables that are likely to be strong predictors of diabetes. The key variables in our analysis include:\n\nDiabetes_binary (Response): The target variable indicating the presence of diabetes (0 = No Diabetes, 1 = Diabetes or Prediabetes).\nBMI: Body Mass Index, a key indicator of obesity.\nHighBP: Whether the individual has high blood pressure.\nAge: 13-level age category (ranging from 18-24 up to 80+).\nGenHlth: Self-reported general health on a scale of 1 (Excellent) to 5 (Poor)."
+  },
+  {
+    "objectID": "modeling.html",
+    "href": "modeling.html",
+    "title": "Modeling",
+    "section": "",
+    "text": "In this section, we will build predictive models to classify whether an individual has diabetes (Diabetes_binary) based on various health indicators."
+  },
+  {
+    "objectID": "modeling.html#data-splitting",
+    "href": "modeling.html#data-splitting",
+    "title": "Modeling",
+    "section": "2.1. Data Splitting",
+    "text": "2.1. Data Splitting\nWe split the data into a training set (70%) and a test set (30%). We set a seed to ensure reproducibility.\n\nset.seed(123)\n\n# Stratified split to maintain class balance\ndata_split &lt;- initial_split(diabetes_clean, prop = 0.70, strata = Diabetes_binary)\ntrain_data &lt;- training(data_split)\ntest_data  &lt;- testing(data_split)\n\n# Verify the split\nnrow(train_data)\n\n[1] 177575\n\nnrow(test_data)\n\n[1] 76105"
+  },
+  {
+    "objectID": "modeling.html#cross-validation-folds",
+    "href": "modeling.html#cross-validation-folds",
+    "title": "Modeling",
+    "section": "2.2. Cross-Validation Folds",
+    "text": "2.2. Cross-Validation Folds\nWe will use 5-fold cross-validation on the training data to tune our model parameters.\n\ncv_folds &lt;- vfold_cv(train_data, v = 5, strata = Diabetes_binary)\n\n# Define the metric set: Log Loss\nmetrics_eval &lt;- metric_set(mn_log_loss)"
   }
 ]
