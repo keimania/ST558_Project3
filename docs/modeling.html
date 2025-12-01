@@ -145,6 +145,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="introduction" class="level1">
 <h1>1. Introduction</h1>
 <p>In this section, we will build predictive models to classify whether an individual has diabetes (Diabetes_binary) based on various health indicators.</p>
+<p>We will explore two types of models:</p>
+<p>Classification Tree: A decision tree model that splits data into nodes to make predictions.</p>
+<p>Random Forest: An ensemble method that aggregates predictions from multiple decision trees to improve accuracy and reduce overfitting.</p>
+<p>We will use the log-loss metric to evaluate model performance and 5-fold Cross-Validation on the training set to tune hyperparameters. Finally, we will compare the best models from each category on the test set to select the final winner.</p>
 </section>
 <section id="setup-and-data-preparation" class="level1">
 <h1>2. Setup and Data Preparation</h1>
@@ -284,6 +288,224 @@ dbl (22): Diabetes_binary, HighBP, HighChol, CholCheck, BMI, Smoker, Stroke,...
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the metric set: Log Loss</span></span>
 <span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>metrics_eval <span class="ot">&lt;-</span> <span class="fu">metric_set</span>(mn_log_loss)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="model-1-classification-tree" class="level1">
+<h1>3. Model 1: Classification Tree</h1>
+<section id="introduction-to-classification-trees" class="level2">
+<h2 class="anchored" data-anchor-id="introduction-to-classification-trees">3.1. Introduction to Classification Trees</h2>
+<p>A Classification Tree is a supervised learning algorithm that predicts the target variable by learning decision rules inferred from the data features. It works by recursively splitting the data into subsets based on the most significant attribute at each step.</p>
+<p>We will tune the cost complexity parameter and tree depth to find the optimal tree size and prevent overfitting.</p>
+</section>
+<section id="model-specification-and-workflow" class="level2">
+<h2 class="anchored" data-anchor-id="model-specification-and-workflow">3.2. Model Specification and Workflow</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Recipe</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>tree_rec <span class="ot">&lt;-</span> <span class="fu">recipe</span>(Diabetes_binary <span class="sc">~</span> BMI <span class="sc">+</span> HighBP <span class="sc">+</span> HighChol <span class="sc">+</span> GenHlth <span class="sc">+</span> Age <span class="sc">+</span> PhysActivity <span class="sc">+</span> DiffWalk <span class="sc">+</span> HeartDiseaseorAttack, <span class="at">data =</span> train_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We set cost_complexity and tree_depth to ‘tune()’ so we can optimize them later.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Model Specification</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>tree_spec <span class="ot">&lt;-</span> <span class="fu">decision_tree</span>(</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">cost_complexity =</span> <span class="fu">tune</span>(),</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">tree_depth =</span> <span class="fu">tune</span>()</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"rpart"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">"classification"</span>)</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Workflow</span></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>tree_wkf <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_recipe</span>(tree_rec) <span class="sc">|&gt;</span></span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_model</span>(tree_spec)</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Grid for Tuning</span></span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>tree_grid <span class="ot">&lt;-</span> <span class="fu">grid_regular</span>(<span class="fu">cost_complexity</span>(), <span class="fu">tree_depth</span>(), <span class="at">levels =</span> <span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="tuning-and-selection" class="level2">
+<h2 class="anchored" data-anchor-id="tuning-and-selection">3.3. Tuning and selection</h2>
+<p>Run the workflow on the cross-validation folds using the grid of parameters</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Tune the model</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>tree_fits <span class="ot">&lt;-</span> tree_wkf <span class="sc">|&gt;</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tune_grid</span>(</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">resamples =</span> cv_folds,</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">grid =</span> tree_grid,</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">metrics =</span> metrics_eval</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Collect metrics</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>tree_fits <span class="sc">|&gt;</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect_metrics</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 25 × 8
+   cost_complexity tree_depth .metric     .estimator  mean     n std_err .config
+             &lt;dbl&gt;      &lt;int&gt; &lt;chr&gt;       &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;  
+ 1    0.0000000001          1 mn_log_loss binary     0.404     5 9.73e-6 pre0_m…
+ 2    0.0000000001          4 mn_log_loss binary     0.394     5 9.45e-3 pre0_m…
+ 3    0.0000000001          8 mn_log_loss binary     0.332     5 1.91e-3 pre0_m…
+ 4    0.0000000001         11 mn_log_loss binary     0.328     5 1.19e-3 pre0_m…
+ 5    0.0000000001         15 mn_log_loss binary     0.336     5 1.66e-3 pre0_m…
+ 6    0.0000000178          1 mn_log_loss binary     0.404     5 9.73e-6 pre0_m…
+ 7    0.0000000178          4 mn_log_loss binary     0.394     5 9.45e-3 pre0_m…
+ 8    0.0000000178          8 mn_log_loss binary     0.332     5 1.91e-3 pre0_m…
+ 9    0.0000000178         11 mn_log_loss binary     0.328     5 1.19e-3 pre0_m…
+10    0.0000000178         15 mn_log_loss binary     0.336     5 1.66e-3 pre0_m…
+# ℹ 15 more rows</code></pre>
+</div>
+</div>
+<p>We select the best parameter based on log_loss.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>best_tree <span class="ot">&lt;-</span> <span class="fu">select_best</span>(tree_fits, <span class="at">metric =</span> <span class="st">"mn_log_loss"</span>)</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>best_tree</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 3
+  cost_complexity tree_depth .config         
+            &lt;dbl&gt;      &lt;int&gt; &lt;chr&gt;           
+1    0.0000000001         11 pre0_mod04_post0</code></pre>
+</div>
+</div>
+<p>We finalize the workflow with the best parameters.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>tree_final_wkf <span class="ot">&lt;-</span> tree_wkf <span class="sc">|&gt;</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">finalize_workflow</span>(best_tree)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We visualize the tuning results using plot Cost Complexity vs.&nbsp;Log Loss, grouped by Tree Depth.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>tree_fits <span class="sc">|&gt;</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect_metrics</span>() <span class="sc">|&gt;</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">tree_depth =</span> <span class="fu">factor</span>(tree_depth)) <span class="sc">|&gt;</span></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(cost_complexity, mean, <span class="at">color =</span> tree_depth)) <span class="sc">+</span></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">size =</span> <span class="fl">1.5</span>, <span class="at">alpha =</span> <span class="fl">0.6</span>) <span class="sc">+</span></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> .metric, <span class="at">scales =</span> <span class="st">"free"</span>, <span class="at">nrow =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">label_number</span>()) <span class="sc">+</span></span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_d</span>(<span class="at">option =</span> <span class="st">"plasma"</span>, <span class="at">begin =</span> .<span class="dv">9</span>, <span class="at">end =</span> <span class="dv">0</span>) <span class="sc">+</span></span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Classification Tree Tuning Results"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+ℹ Please use `linewidth` instead.</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="modeling_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>We train the finalized model on the full training set and evaluates it on the test set.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>tree_final_fit <span class="ot">&lt;-</span> tree_final_wkf <span class="sc">|&gt;</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">last_fit</span>(data_split)</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>tree_final_fit</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># Resampling results
+# Manual resampling 
+# A tibble: 1 × 6
+  splits                 id            .metrics .notes   .predictions .workflow 
+  &lt;list&gt;                 &lt;chr&gt;         &lt;list&gt;   &lt;list&gt;   &lt;list&gt;       &lt;list&gt;    
+1 &lt;split [177575/76105]&gt; train/test s… &lt;tibble&gt; &lt;tibble&gt; &lt;tibble&gt;     &lt;workflow&gt;</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>tree_final_fit <span class="sc">|&gt;</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect_metrics</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 4
+  .metric     .estimator .estimate .config        
+  &lt;chr&gt;       &lt;chr&gt;          &lt;dbl&gt; &lt;chr&gt;          
+1 accuracy    binary         0.863 pre0_mod0_post0
+2 roc_auc     binary         0.803 pre0_mod0_post0
+3 brier_class binary         0.100 pre0_mod0_post0</code></pre>
+</div>
+</div>
+<p>We extract the actual model object for inspection.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>tree_final_model <span class="ot">&lt;-</span> <span class="fu">extract_workflow</span>(tree_final_fit) </span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>tree_final_model</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>══ Workflow [trained] ══════════════════════════════════════════════════════════
+Preprocessor: Recipe
+Model: decision_tree()
+
+── Preprocessor ────────────────────────────────────────────────────────────────
+0 Recipe Steps
+
+── Model ───────────────────────────────────────────────────────────────────────
+n= 177575 
+
+node), split, n, loss, yval, (yprob)
+      * denotes terminal node
+
+   1) root 177575 24742 No Diabetes (0.86066732 0.13933268)  
+     2) HighBP=No High BP 101541  6156 No Diabetes (0.93937424 0.06062576)  
+       4) GenHlth=Excellent,Very Good 65580  1755 No Diabetes (0.97323879 0.02676121) *
+       5) GenHlth=Good,Fair,Poor 35961  4401 No Diabetes (0.87761742 0.12238258)  
+        10) HighChol=No High Chol 23063  2054 No Diabetes (0.91093960 0.08906040)  
+          20) Age=1,2,3,4,5,6,7,8 15458   936 No Diabetes (0.93944883 0.06055117) *
+          21) Age=9,10,11,12,13 7605  1118 No Diabetes (0.85299145 0.14700855)  
+            42) BMI&lt; 28.5 5071   532 No Diabetes (0.89508973 0.10491027)  
+              84) BMI&lt; 23.5 2024   134 No Diabetes (0.93379447 0.06620553) *
+              85) BMI&gt;=23.5 3047   398 No Diabetes (0.86937972 0.13062028)  
+               170) HeartDiseaseorAttack=No 2646   311 No Diabetes (0.88246410 0.11753590) *
+               171) HeartDiseaseorAttack=Yes 401    87 No Diabetes (0.78304239 0.21695761)  
+                 342) BMI&lt; 25.5 160    22 No Diabetes (0.86250000 0.13750000) *
+                 343) BMI&gt;=25.5 241    65 No Diabetes (0.73029046 0.26970954)  
+                   686) DiffWalk=No 144    32 No Diabetes (0.77777778 0.22222222) *
+                   687) DiffWalk=Yes 97    33 No Diabetes (0.65979381 0.34020619)  
+                    1374) Age=9,11,12,13 83    24 No Diabetes (0.71084337 0.28915663) *
+                    1375) Age=10 14     5 Diabetes (0.35714286 0.64285714) *
+            43) BMI&gt;=28.5 2534   586 No Diabetes (0.76874507 0.23125493)  
+              86) GenHlth=Good 1649   296 No Diabetes (0.82049727 0.17950273)  
+               172) HeartDiseaseorAttack=No 1482   243 No Diabetes (0.83603239 0.16396761) *
+               173) HeartDiseaseorAttack=Yes 167    53 No Diabetes (0.68263473 0.31736527)  
+                 346) Age=13 33     7 No Diabetes (0.78787879 0.21212121) *
+                 347) Age=9,10,11,12 134    46 No Diabetes (0.65671642 0.34328358)  
+                   694) BMI&lt; 29.5 23     5 No Diabetes (0.78260870 0.21739130) *
+                   695) BMI&gt;=29.5 111    41 No Diabetes (0.63063063 0.36936937)  
+                    1390) BMI&lt; 36.5 90    31 No Diabetes (0.65555556 0.34444444) *
+                    1391) BMI&gt;=36.5 21    10 No Diabetes (0.52380952 0.47619048)  
+                      2782) PhysActivity=Yes 13     4 No Diabetes (0.69230769 0.30769231) *
+                      2783) PhysActivity=No 8     2 Diabetes (0.25000000 0.75000000) *
+              87) GenHlth=Fair,Poor 885   290 No Diabetes (0.67231638 0.32768362)  
+               174) HeartDiseaseorAttack=No 698   203 No Diabetes (0.70916905 0.29083095)  
+                 348) BMI&lt; 33.5 405    99 No Diabetes (0.75555556 0.24444444)  
+                   696) Age=9,10,13 284    60 No Diabetes (0.78873239 0.21126761) *
+                   697) Age=11,12 121    39 No Diabetes (0.67768595 0.32231405)  
+                    1394) BMI&lt; 31.5 83    21 No Diabetes (0.74698795 0.25301205) *
+                    1395) BMI&gt;=31.5 38    18 No Diabetes (0.52631579 0.47368421)  
+                      2790) GenHlth=Fair 30    13 No Diabetes (0.56666667 0.43333333) *
+                      2791) GenHlth=Poor 8     3 Diabetes (0.37500000 0.62500000) *
+                 349) BMI&gt;=33.5 293   104 No Diabetes (0.64505119 0.35494881)  
+                   698) Age=9,10,12 223    71 No Diabetes (0.68161435 0.31838565)  
+                    1396) BMI&lt; 54.5 215    66 No Diabetes (0.69302326 0.30697674) *
+                    1397) BMI&gt;=54.5 8     3 Diabetes (0.37500000 0.62500000) *
+                   699) Age=11,13 70    33 No Diabetes (0.52857143 0.47142857)  
+                    1398) GenHlth=Fair 52    23 No Diabetes (0.55769231 0.44230769) *
+
+...
+and 502 more lines.</code></pre>
+</div>
+</div>
+<p>We visualizing the Decision Tree.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>tree_final_model <span class="sc">|&gt;</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract_fit_engine</span>() <span class="sc">|&gt;</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>  rpart.plot<span class="sc">::</span><span class="fu">rpart.plot</span>(<span class="at">roundint =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: labs do not fit even at cex 0.15, there may be some overplotting</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="modeling_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
 </div>
 
 

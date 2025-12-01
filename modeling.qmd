@@ -9,6 +9,14 @@ editor: visual
 
 In this section, we will build predictive models to classify whether an individual has diabetes (Diabetes_binary) based on various health indicators.
 
+We will explore two types of models:
+
+Classification Tree: A decision tree model that splits data into nodes to make predictions.
+
+Random Forest: An ensemble method that aggregates predictions from multiple decision trees to improve accuracy and reduce overfitting.
+
+We will use the log-loss metric to evaluate model performance and 5-fold Cross-Validation on the training set to tune hyperparameters. Finally, we will compare the best models from each category on the test set to select the final winner.
+
 # 2. Setup and Data Preparation
 
 First, we load the necessary libraries and apply the same data cleaning steps as performed in the EDA phase.
@@ -73,4 +81,109 @@ cv_folds <- vfold_cv(train_data, v = 5, strata = Diabetes_binary)
 # Define the metric set: Log Loss
 metrics_eval <- metric_set(mn_log_loss)
 
+```
+
+# 3. Model 1: Classification Tree
+
+## 3.1. Introduction to Classification Trees
+
+A Classification Tree is a supervised learning algorithm that predicts the target variable by learning decision rules inferred from the data features. It works by recursively splitting the data into subsets based on the most significant attribute at each step.
+
+We will tune the cost complexity parameter and tree depth to find the optimal tree size and prevent overfitting.
+
+## 3.2. Model Specification and Workflow
+
+```{r}
+# 1. Recipe
+tree_rec <- recipe(Diabetes_binary ~ BMI + HighBP + HighChol + GenHlth + Age + PhysActivity + DiffWalk + HeartDiseaseorAttack, data = train_data)
+```
+
+We set cost_complexity and tree_depth to 'tune()' so we can optimize them later.
+```{r}
+# 2. Model Specification
+tree_spec <- decision_tree(
+  cost_complexity = tune(),
+  tree_depth = tune()
+) |>
+  set_engine("rpart") |>
+  set_mode("classification")
+
+# 3. Workflow
+tree_wkf <- workflow() |>
+  add_recipe(tree_rec) |>
+  add_model(tree_spec)
+
+# 4. Grid for Tuning
+tree_grid <- grid_regular(cost_complexity(), tree_depth(), levels = 5)
+```
+
+## 3.3. Tuning and selection
+
+Run the workflow on the cross-validation folds using the grid of parameters
+```{r}
+# Tune the model
+tree_fits <- tree_wkf |>
+  tune_grid(
+    resamples = cv_folds,
+    grid = tree_grid,
+    metrics = metrics_eval
+  )
+```
+
+```{r}
+# Collect metrics
+tree_fits |>
+  collect_metrics()
+```
+
+We select the best parameter based on log_loss.
+```{r}
+best_tree <- select_best(tree_fits, metric = "mn_log_loss")
+best_tree
+```
+
+We finalize the workflow with the best parameters.
+```{r}
+# 
+tree_final_wkf <- tree_wkf |>
+  finalize_workflow(best_tree)
+```
+
+We visualize the tuning results using plot Cost Complexity vs. Log Loss, grouped by Tree Depth.
+```{r}
+tree_fits |>
+  collect_metrics() |>
+  mutate(tree_depth = factor(tree_depth)) |>
+  ggplot(aes(cost_complexity, mean, color = tree_depth)) +
+  geom_line(size = 1.5, alpha = 0.6) +
+  geom_point(size = 2) +
+  facet_wrap(~ .metric, scales = "free", nrow = 2) +
+  scale_x_log10(labels = scales::label_number()) +
+  scale_color_viridis_d(option = "plasma", begin = .9, end = 0) +
+  labs(title = "Classification Tree Tuning Results")
+```
+
+We train the finalized model on the full training set and evaluates it on the test set.
+```{r}
+tree_final_fit <- tree_final_wkf |>
+  last_fit(data_split)
+tree_final_fit
+```
+
+```{r}
+tree_final_fit |>
+  collect_metrics()
+```
+
+We extract the actual model object for inspection.
+```{r}
+tree_final_model <- extract_workflow(tree_final_fit) 
+tree_final_model
+```
+
+We visualizing the Decision Tree.
+```{r}
+tree_final_model |>
+  extract_fit_engine() |>
+  rpart.plot::rpart.plot(roundint = FALSE)
 ```
