@@ -125,15 +125,15 @@ function(BMI = 28, HighBP = 0, HighChol = 0, GenHlth = 3, Age = 9, PhysActivity 
 # 1) /info Endpoint
 # Request: GET
 # Purpose: Retrieve author name and GitHub page URL.
-# curl -X GET "http://localhost:23464/info"
+# curl -X GET "http://localhost:8000/info"
 
 # 2) /confusion Endpoint
 # Request: GET
 # Purpose: Generate and download the confusion matrix plot as a PNG file named 'confusion.png'.
-# curl -X GET "http://localhost:23464/confusion" --output confusion.png
+# curl -X GET "http://localhost:8000/confusion" --output confusion.png
 
 # 3) /pred Endpoint
 # Request: POST
 # Purpose: Predict diabetes status based on input health indicators.
 # Parameters passed in URL query string: BMI=30, HighBP=1, HighChol=1, GenHlth=4, Age=10,PhysActivity=0, DiffWalk=1, HeartDiseaseorAttack=1
-# curl -X POST "http://localhost:23464/pred?BMI=30&HighBP=1&HighChol=1&GenHlth=4&Age=10&PhysActivity=0&DiffWalk=1&HeartDiseaseorAttack=1"
+# curl -X POST "http://localhost:8000/pred?BMI=30&HighBP=1&HighChol=1&GenHlth=4&Age=10&PhysActivity=0&DiffWalk=1&HeartDiseaseorAttack=1"
