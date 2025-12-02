@@ -167,4 +167,4 @@ Our EDA confirms that variables such as **BMI, General Health, High Blood Pressu
 
 We will now proceed to split this data and train Classification Tree and Random Forest models to predict diabetes status.
 
-[Click here for the Modeling Page](modeling.html)
+[Click here for the Modeling Page](Modeling.html)

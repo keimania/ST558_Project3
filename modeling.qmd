@@ -345,10 +345,12 @@ print(model_comparison)
 In this analysis, we built and compared two machine learning models to predict diabetes: a single Classification Tree and a Random Forest.
 
 ## 6.1. Performance Comparison
+
 We evaluated the models based on the metrics collected from the test set:
 
 -   **Classification Tree:** This model achieved an **Accuracy of 86.3%** and an **ROC AUC of 0.803**. While these numbers indicate decent predictive power, single trees are often prone to high variance.
 -   **Random Forest:** The ensemble model achieved a **Log Loss of 0.320**. A lower log-loss indicates that the model is not only correct but also confident in its probabilistic predictions.
 
 ## 6.2. Final Selection
+
 Although the Classification Tree is easier to explain, the **Random Forest** demonstrates strong performance metrics (Log Loss: 0.320), suggesting it is robust in handling the complexity of health data. Therefore, we select the **Random Forest** as our final model for deployment to maximize predictive reliability.
