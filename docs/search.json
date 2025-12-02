@@ -257,5 +257,12 @@
     "title": "Modeling",
     "section": "6.2. Final Selection",
     "text": "6.2. Final Selection\nAlthough the Classification Tree is easier to explain, the Random Forest demonstrates strong performance metrics (Log Loss: 0.320), suggesting it is robust in handling the complexity of health data. Therefore, we select the Random Forest as our final model for deployment to maximize predictive reliability."
+  },
+  {
+    "objectID": "Modeling.html#preparing-for-api",
+    "href": "Modeling.html#preparing-for-api",
+    "title": "Modeling",
+    "section": "6.3. Preparing for API",
+    "text": "6.3. Preparing for API\nWe calculate Mean for Numeric and Mode for Factors to use as default values for API.\n\npredictors &lt;- c(\"BMI\", \"HighBP\", \"HighChol\", \"GenHlth\", \"Age\", \"PhysActivity\", \"DiffWalk\", \"HeartDiseaseorAttack\")\n\n# Calculate Mean for Numeric and Mode for Factors\ndefaults &lt;- diabetes |&gt;\n  select(all_of(predictors)) |&gt;\n  summarise(\n    BMI = mean(BMI, na.rm = TRUE),\n    across(-BMI, \\(x) as.numeric(names(sort(table(x), decreasing = TRUE))[1]))\n  )\n\nprint(defaults)\n\n# A tibble: 1 × 8\n    BMI HighBP HighChol GenHlth   Age PhysActivity DiffWalk HeartDiseaseorAttack\n  &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;        &lt;dbl&gt;    &lt;dbl&gt;                &lt;dbl&gt;\n1  28.4      0        0       2     9            1        0                    0"
   }
 ]

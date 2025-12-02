@@ -94,7 +94,7 @@ function() {
 #* @param DiffWalk Difficulty Walking (0 = No, 1 = Yes)
 #* @param HeartDiseaseorAttack Heart Disease or Attack (0 = No, 1 = Yes)
 #* @post /pred
-function(BMI = 28, HighBP = 0, HighChol = 0, GenHlth = 3, Age = 9, PhysActivity = 1, DiffWalk = 0, HeartDiseaseorAttack = 0) {
+function(BMI = 28.38236, HighBP = 0, HighChol = 0, GenHlth = 2, Age = 9, PhysActivity = 1, DiffWalk = 0, HeartDiseaseorAttack = 0) {
   
   # Create a data frame from inputs
   input_data <- tibble(
@@ -119,21 +119,15 @@ function(BMI = 28, HighBP = 0, HighChol = 0, GenHlth = 3, Age = 9, PhysActivity 
   )
 }
 
+# 3. Example function calls
 
-# 3. example function calls
+# 1) Using default value
+# curl -X POST "http://localhost:8000/pred"
 
-# 1) /info Endpoint
-# Request: GET
-# Purpose: Retrieve author name and GitHub page URL.
-# curl -X GET "http://localhost:8000/info"
+# 2) Using partial parameters
+# Parameters passed in URL query string: BMI=40, HighBP=1, HighChol=1, GenHlth=5, Age=10, HeartDiseaseorAttack=1
+# curl -X POST "http://localhost:8000/pred?BMI=40&HighBP=1&HighChol=1&GenHlth=5&Age=10&HeartDiseaseorAttack=1"
 
-# 2) /confusion Endpoint
-# Request: GET
-# Purpose: Generate and download the confusion matrix plot as a PNG file named 'confusion.png'.
-# curl -X GET "http://localhost:8000/confusion" --output confusion.png
-
-# 3) /pred Endpoint
-# Request: POST
-# Purpose: Predict diabetes status based on input health indicators.
+# 3) Using full parameters
 # Parameters passed in URL query string: BMI=30, HighBP=1, HighChol=1, GenHlth=4, Age=10,PhysActivity=0, DiffWalk=1, HeartDiseaseorAttack=1
 # curl -X POST "http://localhost:8000/pred?BMI=30&HighBP=1&HighChol=1&GenHlth=4&Age=10&PhysActivity=0&DiffWalk=1&HeartDiseaseorAttack=1"

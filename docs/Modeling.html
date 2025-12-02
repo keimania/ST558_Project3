@@ -736,6 +736,29 @@ OOB prediction error (Brier s.):  0.09838308 </code></pre>
 <section id="final-selection" class="level2">
 <h2 class="anchored" data-anchor-id="final-selection">6.2. Final Selection</h2>
 <p>Although the Classification Tree is easier to explain, the <strong>Random Forest</strong> demonstrates strong performance metrics (Log Loss: 0.320), suggesting it is robust in handling the complexity of health data. Therefore, we select the <strong>Random Forest</strong> as our final model for deployment to maximize predictive reliability.</p>
+</section>
+<section id="preparing-for-api" class="level2">
+<h2 class="anchored" data-anchor-id="preparing-for-api">6.3. Preparing for API</h2>
+<p>We calculate Mean for Numeric and Mode for Factors to use as default values for API.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>predictors <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"BMI"</span>, <span class="st">"HighBP"</span>, <span class="st">"HighChol"</span>, <span class="st">"GenHlth"</span>, <span class="st">"Age"</span>, <span class="st">"PhysActivity"</span>, <span class="st">"DiffWalk"</span>, <span class="st">"HeartDiseaseorAttack"</span>)</span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate Mean for Numeric and Mode for Factors</span></span>
+<span id="cb66-4"><a href="#cb66-4" aria-hidden="true" tabindex="-1"></a>defaults <span class="ot">&lt;-</span> diabetes <span class="sc">|&gt;</span></span>
+<span id="cb66-5"><a href="#cb66-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">all_of</span>(predictors)) <span class="sc">|&gt;</span></span>
+<span id="cb66-6"><a href="#cb66-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb66-7"><a href="#cb66-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">BMI =</span> <span class="fu">mean</span>(BMI, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb66-8"><a href="#cb66-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">across</span>(<span class="sc">-</span>BMI, \(x) <span class="fu">as.numeric</span>(<span class="fu">names</span>(<span class="fu">sort</span>(<span class="fu">table</span>(x), <span class="at">decreasing =</span> <span class="cn">TRUE</span>))[<span class="dv">1</span>]))</span>
+<span id="cb66-9"><a href="#cb66-9" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb66-10"><a href="#cb66-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb66-11"><a href="#cb66-11" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(defaults)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 8
+    BMI HighBP HighChol GenHlth   Age PhysActivity DiffWalk HeartDiseaseorAttack
+  &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;        &lt;dbl&gt;    &lt;dbl&gt;                &lt;dbl&gt;
+1  28.4      0        0       2     9            1        0                    0</code></pre>
+</div>
+</div>
 
 
 </section>

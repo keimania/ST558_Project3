@@ -354,3 +354,21 @@ We evaluated the models based on the metrics collected from the test set:
 ## 6.2. Final Selection
 
 Although the Classification Tree is easier to explain, the **Random Forest** demonstrates strong performance metrics (Log Loss: 0.320), suggesting it is robust in handling the complexity of health data. Therefore, we select the **Random Forest** as our final model for deployment to maximize predictive reliability.
+
+## 6.3. Preparing for API
+
+We calculate Mean for Numeric and Mode for Factors to use as default values for API.
+
+```{r}
+predictors <- c("BMI", "HighBP", "HighChol", "GenHlth", "Age", "PhysActivity", "DiffWalk", "HeartDiseaseorAttack")
+
+# Calculate Mean for Numeric and Mode for Factors
+defaults <- diabetes |>
+  select(all_of(predictors)) |>
+  summarise(
+    BMI = mean(BMI, na.rm = TRUE),
+    across(-BMI, \(x) as.numeric(names(sort(table(x), decreasing = TRUE))[1]))
+  )
+
+print(defaults)
+```
